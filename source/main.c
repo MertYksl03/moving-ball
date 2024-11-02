@@ -10,33 +10,37 @@
 #define FPS 60
 #define FRAME_TARGET_TIME 1000 / FPS
 
-#define BALL_SPEED 10
+#define BALL_MAX_SPEED 30
+#define BALL_MAX_SIZE 400
 
 //FUNCTION PROTOTYPES
-void process_input();
+void process_input(SDL_Event event);
 int initialize_window();
 void update();
 void render();
 void setup();
 void QUIT();
 void move_ball();
+void enlarge_ball();
+void shrink_ball();
 
 SDL_Window *window = NULL;
 SDL_Renderer *renderer = NULL;
 int last_frame_time = 0;
-int ball_size = 100;
+
+//initial size of the ball
+int init_ball_size = 100;
+
+//initial speed of the ball
+int ball_speed = 10;
 
 int is_game_running = FALSE;
-int move = 0;   
 
 enum {
-    MOVE_STAY,
     MOVE_UP,
     MOVE_DOWN,
     MOVE_LEFT,
     MOVE_RIGHT,
-    MOVE_INCREASE_SPEED,
-    MOVE_DECREASE_SPEED,
 };
 
 struct ball
@@ -51,13 +55,16 @@ struct ball
 int main(void) 
 {
     is_game_running = initialize_window();
+    
+    //to handle the input
+    SDL_Event event;
 
     setup();
 
     while(is_game_running) 
     {
-        process_input();
-        update(move);
+        process_input(event);
+        update();
         //render_text();
         render();
     }
@@ -66,9 +73,8 @@ int main(void)
 
 }
 
-void process_input() 
+void process_input(SDL_Event event)  
 { 
-    SDL_Event event;
     while (SDL_PollEvent(&event))
         {
             switch (event.type)
@@ -96,6 +102,27 @@ void process_input()
                         case SDLK_RIGHT:
                             ball.direction = MOVE_RIGHT;
                             break; 
+                        case SDLK_SPACE:
+                            enlarge_ball();
+                            break;
+                        case SDLK_RETURN:
+                            shrink_ball();
+                            break;
+                        case SDLK_r:
+                            setup();
+                            break;
+                        case SDLK_w:
+                            if (ball.speed < BALL_MAX_SPEED) 
+                            {
+                                ball.speed += 5;
+                            }
+                            break;
+                        case SDLK_s:
+                            if (ball.speed > 5) 
+                            {
+                                ball.speed -= 5;
+                            }
+                            break;
                     }
             }
         }
@@ -144,6 +171,23 @@ void update()
 
 }
 
+void enlarge_ball() 
+{   
+    if (ball.radius < BALL_MAX_SIZE) 
+    {
+        ball.radius += 10;
+    }
+}
+
+void shrink_ball() 
+{
+    if(ball.radius > init_ball_size) 
+    {
+        ball.radius -= 10;
+    
+    }
+}
+
 void move_ball() 
 {
 
@@ -177,17 +221,7 @@ void move_ball()
                 ball.x += ball.speed;
             }
             break;
-        
-        // case MOVE_INCREASE_SPEED:
-        //     movement_speed += 1;
-        //     break;
-        
-        // case MOVE_DECREASE_SPEED:
-        //     movement_speed -=1;
-        //     break;
         }
-        
-        //stop the ball 
 
 }
 
@@ -195,17 +229,6 @@ void render()
 {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
-    // //draw a rectangle 
-    // SDL_Rect ball_rect = {
-    //                     (int)ball.x, 
-    //                     (int)ball.y, 
-    //                     (int)ball.width, 
-    //                     (int)ball.height};
-
-    // SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    // SDL_RenderFillRect(renderer, &ball_rect);
-
-
 
     //draw a white cirlce
     SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
@@ -223,10 +246,10 @@ void render()
 
 void setup() 
 {
-    ball.x = (WINDOW_WIDTH / 2) - (ball_size / 2);
-    ball.y = (WINDOW_HEIGHT / 2) - (ball_size / 2);
-    ball.radius = ball_size;
-    ball.speed = BALL_SPEED;
+    ball.x = (WINDOW_WIDTH / 2) - (init_ball_size / 2);
+    ball.y = (WINDOW_HEIGHT / 2) - (init_ball_size / 2);
+    ball.radius = init_ball_size;
+    ball.speed = ball_speed;
     
     //set the initial direction randomly 
     srand(time(NULL));
